@@ -1,0 +1,11 @@
+import static java.lang.Math.*;
+public class Main {
+    public static void main(String[] args) {
+        String greeting="A0x65"+65+'a';
+        String z=String.join("//",greeting,"hello");
+        int a=greeting.offsetByCodePoints(0,0);
+        int q=greeting.charAt(0);
+        int p[]=greeting.codePoints().toArray();
+        String j=new String(p,0,p.length);
+       System.out.println(j);
+    }}

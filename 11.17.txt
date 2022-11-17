@@ -7,4 +7,23 @@ public class Main {
        Scanner iz=new Scanner(System.in);
        name=iz.nextLine();
         PrintWriter out=new PrintWriter("D:\\"+name+".txt",StandardCharsets.UTF_8);
-    }}
+        String z;
+        do{
+            Scanner in=new Scanner(System.in);
+            String  a=in.nextLine();
+            if(!a.equalsIgnoreCase("end"))
+            out.println(a);
+            z=a;
+        }while(!z.equalsIgnoreCase("end"));
+        out.close();
+    }}//创建并写入
+
+
+
+
+
+
+
+
+
+

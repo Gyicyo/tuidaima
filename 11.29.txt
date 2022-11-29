@@ -1,0 +1,42 @@
+public class Hello {
+    static class vo{
+        int z;
+        String ma;
+        public vo(int z,String ma){
+            this.z=z;
+            this.ma=ma;
+        }
+        public vo(){}
+         public void zd(){
+            System.out.println("111");
+        }
+    }
+    static class cz extends vo{
+        int ss;
+        int z;
+        String ma;
+         public cz(int z,String ma,int ss){
+            this.z=z;
+            this.ma=ma;
+            this.ss=ss;
+            super.z=1;
+            super.ma="ggg";
+        }
+        public void zd(){
+            System.out.println("222");
+            System.out.println(23);
+        }
+    }
+    public static void main(String[] args) throws Error{
+        cz one=new cz(12,"kkx",23);
+        vo gg=one;
+        one.zd();
+        gg.zd();
+        System.out.println(gg.z+gg.ma);
+        one.zd();
+        gg.zd();
+        vo fs=new vo();
+        cz gf=(cz)gg;
+        System.out.println(gf.ss);
+    }
+}

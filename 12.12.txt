@@ -1,0 +1,40 @@
+package com.example.criminalintent;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.view.Surface;
+import android.view.WindowManager;
+
+public class MainActivity extends AppCompatActivity {
+    private boolean isHorizontalScreen(){
+        int angle = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        if (angle == Surface.ROTATION_90 || angle == Surface.ROTATION_270){
+            //如果屏幕旋转90°或者270°是判断为横屏，横屏规避不展示
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        FragmentManager fm=getSupportFragmentManager();
+        Fragment fragment=fm.findFragmentById(R.id.fragment_container);//向FragmentMAnager请求并获取fragment
+        if(fragment==null&&!isHorizontalScreen())
+        {fragment =new CrimeFragment();
+        fm.beginTransaction()
+                .add(R.id.fragment_container,fragment)//容器视图资源ID，新创建的CrimeFragment
+                .commit();}//创建一个新的fragment事物，执行一个fragment添加操作后提交事务
+        else if(fragment==null&&isHorizontalScreen())
+        {fragment=new CrimeFragment();
+        fm.beginTransaction()
+                .add(R.id.fragment_container2,fragment)
+                .commit();}
+    }
+}

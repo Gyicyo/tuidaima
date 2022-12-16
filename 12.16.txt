@@ -1,0 +1,72 @@
+import java.io.Serializable;
+
+public class Main {
+    interface USB{
+       void read();
+       void write();
+    }
+
+    class YouPan implements USB {
+        @Override
+        public void read(){
+            System.out.println("U盘正在通过USB功能读取数据");
+        }
+        @Override
+        public void write(){
+            System.out.println("U盘正在通过USB功能写入数据");
+        }
+    }
+    class JianPan implements USB{
+        @Override
+        public void read(){
+            System.out.println("键盘正在通过USB功能读取数据");
+        }
+        @Override
+        public  void write(){
+            System.out.println("键盘正在通过USB功能写入数据");
+        }
+    }
+    public void main(String[] args) {
+
+    }
+}
+
+
+
+
+
+
+//计时器
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.Instant;
+
+class TimePrinter implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+        System.out.println("At the tone,the time is:"
+                + Instant.ofEpochMilli(event.getWhen())); 
+        Toolkit.getDefaultToolkit().beep();                    //发声
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+        var listener = new TimePrinter();
+        Timer t = new Timer(1000, listener);    //1000毫秒一次，引入listener来指定计时器行为
+        t.start();
+        JOptionPane.showMessageDialog(null, "Quit program?");//在运行程序时弹出（对话框）
+        System.exit(0);     //用于终止程序
+    }
+}
+
+
+
+
+
+
+
+

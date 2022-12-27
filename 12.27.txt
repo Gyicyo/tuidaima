@@ -1,0 +1,508 @@
+CriminalIntent详解(到第九章)：
+
+
+
+Crime.java:
+
+package com.example.criminalintent;
+//单个案例
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.text.DateFormat;
+import java.text.FieldPosition;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.UUID;
+
+public class Crime {
+    private UUID mId;//id
+    private String mTitle;//题目
+    private Date mDate;//创建日期
+    private boolean mSolved;//是否解决
+    private boolean mRequiresPolice;//是否需要警方协助
+    SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日，EE HH点mm分ss秒");//进行日期格式转换
+
+    public Crime(){//初始化
+        mId=UUID.randomUUID();
+        mDate=new Date();
+        };
+
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public void setTitle(String title) {
+        mTitle = title;
+    }
+
+    public String getDate() {
+        return sdf.format(mDate);//格式化mDAte并返回格式化后的字符串
+    }
+
+    public void setDate(Date date) {
+        mDate = date;
+    }
+
+    public boolean isSolved() {
+        return mSolved;
+    }
+
+    public void setSolved(boolean solved) {
+        mSolved = solved;
+    }
+
+    public UUID getId() {
+        return mId;
+    }
+
+    public boolean isRequiresPolice() {
+        return mRequiresPolice;
+    }
+
+    public void setRequiresPolice(boolean requiresPolice) {
+        mRequiresPolice = requiresPolice;
+    }
+}
+
+
+
+CrimeFragment.java:
+
+package com.example.criminalintent;
+
+
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import androidx.fragment.app.Fragment;
+
+public class CrimeFragment extends Fragment {
+    private Crime mCrime;//引入Crime
+    private EditText mTitleField;//用以编辑题目
+    private Button mDateButton;//用以编辑日期
+    private CheckBox mSolvedCheckBox;//用以检查是否完成
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //Fragment中不含setContentView()，因为显示是交给其他来管理的，Fragment仅仅是一个视图
+        mCrime = new Crime();//针对该Fragment创建一个案例
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        //对Fragment的视图进行编辑
+        View v = inflater.inflate(R.layout.fragment_crime, container, false);
+        //需要返回的View
+        mTitleField = (EditText) v.findViewById(R.id.crime_title);//绑定题目
+        mTitleField.addTextChangedListener(new TextWatcher() {//当主题文本发生改变时执行
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {//将要改变之前
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {//改变
+                mCrime.setTitle(s.toString());//（CharSequence为改变后的文本类型）
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {//改变后
+
+            }
+        });
+        mDateButton = (Button) v.findViewById(R.id.crime_date);//绑定日期
+        mDateButton.setText(mCrime.getDate());//确定日期
+        mDateButton.setEnabled(false);//禁用Button
+        mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);//绑定选择框
+        mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            //一旦选择框发生改变，则
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mCrime.setSolved(isChecked);//对mSolved进行修改，这里通过isChecked判断是否打勾
+            }
+        });
+        return v;//视图编辑完成，返回编辑后的视图
+    }
+}
+
+
+
+SingleFragmentActivity.java:
+
+package com.example.criminalintent;
+
+import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
+public abstract class SingleFragmentActvity extends AppCompatActivity {
+    protected abstract Fragment createFragment();//创建一个空的Fragment
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);//显示land_main.xml中的视图
+
+        FragmentManager fm = getSupportFragmentManager();//创建并获取一个Fragment管理器
+        Fragment fragment = fm.findFragmentById(R.id.fragment_container);//向FragmentMAnager请求并获取fragment
+
+        if (fragment == null)
+            fragment = createFragment();
+        fm.beginTransaction()
+                .add(R.id.fragment_container, fragment)//容器视图资源ID，需要绑定的Fragment
+                .commit();//创建一个新的fragment事物，执行一个fragment添加操作后提交事务
+    }
+}
+
+
+CrimeLab:
+
+package com.example.criminalintent;
+//案例组
+import android.content.Context;
+
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class CrimeLab {
+    private static CrimeLab sCrimeLab;//
+    private List<Crime> mCrimes;
+
+    public static CrimeLab get(Context context) {
+        if (sCrimeLab == null)
+            sCrimeLab = new CrimeLab(context);
+        return sCrimeLab;
+    }//因为下方用到的构造器是私有构造器，因此其他类无法创建CrimeLab，只能通过get（）获取CrimeLab
+
+    private CrimeLab(Context context) {
+        mCrimes = new ArrayList<>();//List<E>是一个泛型类，支持存放特定数据类型的有序列表对象，拥有获取、新增和删除列
+        //表元素的方法。
+        for(int i=1;i<101;i++)
+        {
+            Crime crime=new Crime();//创建单个案例
+            crime.setTitle("案例 #"+i);//对单个案例进行赋题
+            crime.setSolved(i%2==0);
+            if(i%2==0)
+                crime.setRequiresPolice(true);
+            else
+                crime.setRequiresPolice(false);
+            mCrimes.add(crime);//将编辑好的单个案例添加到案例组中
+        }
+    }
+
+    public List<Crime> getCrimes() {
+        return mCrimes;//返回编辑好的案例组
+    }
+
+    public Crime getCrime(UUID id) {
+        for (Crime crime : mCrimes)
+            if (crime.getId().equals(id)) {
+                return crime;
+            }
+        return null;
+    }
+}
+
+
+
+CrimeListFragment:
+
+package com.example.criminalintent;
+
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+
+import java.util.List;
+
+public class CrimeListFragment extends Fragment {
+    private RecyclerView mCrimeRecyclerView;
+    private CrimeAdapter mAdapter;//有RecyclerView就要有Adapter
+
+    private static class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView mTitleTextView;
+        private TextView mDateTextView;
+        private Crime mCrime;
+
+        public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
+            super(inflater.inflate(R.layout.list_item_crime, parent, false));//实例化布局
+            mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);//绑定题目
+            mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);//绑定日期
+            itemView.setOnClickListener(this);
+            //注册一个回调，以便在点击时调用回调，如果不可点击，则将变成可点击的，这里this表明全视图可点击
+        }
+
+        public void bind(Crime crime) {//每次有新的Crime要在视图中显示时，都要调用bin一次来进行视图绑定
+            mCrime = crime;
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate());
+        }
+
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(itemView.getContext(), mCrime.getTitle(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static class CrimeHolder2 extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView mTitleTextView;
+        private TextView mDateTextView;
+        private Crime mCrime;
+
+        public CrimeHolder2(LayoutInflater inflater, ViewGroup parent) {
+            super(inflater.inflate(R.layout.list_item_crime_police, parent, false));
+            mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
+            mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
+            itemView.setOnClickListener(this);
+        }
+
+        public void bind(Crime crime) {
+            mCrime = crime;
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate());
+        }
+
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(itemView.getContext(), mCrime.getTitle(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        //需要显示新创建的ViewHolder对象或让Crime和已创建的ViewHolder关联时，RecyclerView会找Adapter
+        private List<Crime> mCrimes;
+
+        public CrimeAdapter(List<Crime> crimes) {
+            mCrimes = crimes;//导入已创建的案例组
+        }
+
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            //RecyclerView需要新的ViewHolder来显示列表项时，会调用onCreateViewHolder方法
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            //从一个Context中，获得一个布局填充器，这样就可以使用这个填充器来把xml布局文件转为View对象了。
+            //这里的作用还有初始化，否则会报错
+            if (viewType == 0)
+                return new CrimeHolder(layoutInflater, parent);
+            else
+                return new CrimeHolder2(layoutInflater, parent);
+        }//RecyclerView需要新的ViewHolder来显示列表项时，会调用onCreateViewHolder方法。在这个方法内部，要创建一个LayoutInflater，然后用它创建CrimeHolder
+
+        @Override
+        public int getItemViewType(int position) {
+            return mCrimes.get(position).isRequiresPolice() ? 0 : 1;
+            //看ViewHolder的创建先后来定顺序。例如CrimeHolder先创建，0就代表CrimeHolder，1代表CrimeHolder2
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            //当Adaper获取新数据（新建ViewHolder）时调用onBindViewHolder。position即为将要调用的第几个数据
+            Crime crime = mCrimes.get(position);//进行数据提取
+            if (holder instanceof CrimeHolder)
+                //或者也可以使用ViewHolder的方法。holder.getItemViewType,该方法返回int型值
+                ((CrimeHolder) holder).bind(crime);
+            else
+                ((CrimeHolder2) holder).bind(crime);//调用bind（）方法来修改Title与Date
+        }//CrimeAdapter必须覆盖onBindViewHolder方法
+
+        @Override
+        public int getItemCount() {
+            return mCrimes.size();//RecyclerView通过调用该方法确定一共有多少个Fragment
+        }
+
+    }//需要将Adapter与RecyclerView关联起来。(updateUI)
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
+
+        mCrimeRecyclerView = (RecyclerView) view
+                .findViewById(R.id.crime_recycler_view);//给予RecyclerView显示格式
+        mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        //必须为RecyclerView提供一个LayoutManager，这样RecyclerView才能发生作用
+        updateUI();
+        return view;
+    }
+
+    private void updateUI() {//将RecyclerView与Adapter相关联
+        CrimeLab crimeLab = CrimeLab.get(getActivity());//获取案例组
+        List<Crime> crimes = crimeLab.getCrimes();//转接案例组
+        mAdapter = new CrimeAdapter(crimes);//将案例组传给Adapter并创建Adapter
+        mCrimeRecyclerView.setAdapter(mAdapter);//将RecyclerView与Adapter绑定
+    }
+
+}//ViewHloder用来控制视图的样式和行为，Adapter用来控制视图的调用选择
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.example.criminalintent;
+
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+
+import java.util.List;
+
+public class CrimeListFragment extends Fragment {
+    private RecyclerView mCrimeRecyclerView;
+    private CrimeAdapter mAdapter;//有RecyclerView就要有Adapter
+
+    private static class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView mTitleTextView;
+        private TextView mDateTextView;
+        private Crime mCrime;
+
+        public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
+            super(inflater.inflate(R.layout.list_item_crime, parent, false));//实例化布局
+            mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);//绑定题目
+            mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);//绑定日期
+            itemView.setOnClickListener(this);
+            //注册一个回调，以便在点击时调用回调，如果不可点击，则将变成可点击的，这里this表明全视图可点击
+        }
+
+        public void bind(Crime crime) {//每次有新的Crime要在视图中显示时，都要调用bin一次来进行视图绑定
+            mCrime = crime;
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate());
+        }
+
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(itemView.getContext(), mCrime.getTitle(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static class CrimeHolder2 extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView mTitleTextView;
+        private TextView mDateTextView;
+        private Crime mCrime;
+
+        public CrimeHolder2(LayoutInflater inflater, ViewGroup parent) {
+            super(inflater.inflate(R.layout.list_item_crime_police, parent, false));
+            mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
+            mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
+            itemView.setOnClickListener(this);
+        }
+
+        public void bind(Crime crime) {
+            mCrime = crime;
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate());
+        }
+
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(itemView.getContext(), mCrime.getTitle(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        //需要显示新创建的ViewHolder对象或让Crime和已创建的ViewHolder关联时，RecyclerView会找Adapter
+        private List<Crime> mCrimes;
+
+        public CrimeAdapter(List<Crime> crimes) {
+            mCrimes = crimes;//导入已创建的案例组
+        }
+
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            //RecyclerView需要新的ViewHolder来显示列表项时，会调用onCreateViewHolder方法
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            //从一个Context中，获得一个布局填充器，这样就可以使用这个填充器来把xml布局文件转为View对象了。
+            //这里的作用还有初始化，否则会报错
+            if (viewType == 0)
+                return new CrimeHolder(layoutInflater, parent);
+            else
+                return new CrimeHolder2(layoutInflater, parent);
+        }//RecyclerView需要新的ViewHolder来显示列表项时，会调用onCreateViewHolder方法。在这个方法内部，要创建一个LayoutInflater，然后用它创建CrimeHolder
+
+        @Override
+        public int getItemViewType(int position) {
+            return mCrimes.get(position).isRequiresPolice() ? 0 : 1;
+            //看ViewHolder的创建先后来定顺序。例如CrimeHolder先创建，0就代表CrimeHolder，1代表CrimeHolder2
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            //当Adaper获取新数据（新建ViewHolder）时调用onBindViewHolder。position即为将要调用的第几个数据
+            Crime crime = mCrimes.get(position);//进行数据提取
+            if (holder instanceof CrimeHolder)
+                //或者也可以使用ViewHolder的方法。holder.getItemViewType,该方法返回int型值
+                ((CrimeHolder) holder).bind(crime);
+            else
+                ((CrimeHolder2) holder).bind(crime);//调用bind（）方法来修改Title与Date
+        }//CrimeAdapter必须覆盖onBindViewHolder方法
+
+        @Override
+        public int getItemCount() {
+            return mCrimes.size();//RecyclerView通过调用该方法确定一共有多少个Fragment
+        }
+
+    }//需要将Adapter与RecyclerView关联起来。(updateUI)
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
+
+        mCrimeRecyclerView = (RecyclerView) view
+                .findViewById(R.id.crime_recycler_view);//给予RecyclerView显示格式
+        mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        //必须为RecyclerView提供一个LayoutManager，这样RecyclerView才能发生作用
+        updateUI();
+        return view;
+    }
+
+    private void updateUI() {//将RecyclerView与Adapter相关联
+        CrimeLab crimeLab = CrimeLab.get(getActivity());//获取案例组
+        List<Crime> crimes = crimeLab.getCrimes();//转接案例组
+        mAdapter = new CrimeAdapter(crimes);//将案例组传给Adapter并创建Adapter
+        mCrimeRecyclerView.setAdapter(mAdapter);//将RecyclerView与Adapter绑定
+    }
+
+}//ViewHloder用来控制视图的样式和行为，Adapter用来控制视图的调用选择
